@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Voice Input</title>
+  </head>
+
+  <body>
+    <textarea id="voiceInputBox" cols="30" rows="10"></textarea>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script>
+      const SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "ja-JP";
+      recognition.interimResults = true;
+      recognition.continuous = true;
+      recognition.maxAlternatives = 1;
+      let isListening = false;
+
+      function voiceRecognizeStart(outputBox) {
+        recognition.onerror = event => {
+          if (isListening) {
+            voiceRecognizeStart();
+          }
+        };
+        recognition.onsoundend = event => {
+          if (isListening) {
+            voiceRecognizeStart();
+          }
+        };
+        recognition.onresult = event => {
+          $(outputBox).val(event.results[0][0].transcript);
+          if (event.results[0].isFinal) {
+            isListening = false;
+            recognition.stop();
+            voiceRecognizeStart(outputBox);
+          }
+        };
+
+        try {
+          recognition.start();
+          isListening = true;
+        } catch (e) {
+          console.log("音声認識を既に開始しています");
+        }
+      }
+
+      $("#voiceInputBox").on("click", function() {
+        voiceRecognizeStart("#voiceInputBox");
+      });
+    </script>
+  </body>
+</html>

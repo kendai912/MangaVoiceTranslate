@@ -1,0 +1,21 @@
+{
+  "name": "powerpointsketch",
+  "short_name": "pptsketch",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#FFF",
+  "theme_color": "#000",
+  "icons": [
+    {
+      "src": "./img/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./img/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

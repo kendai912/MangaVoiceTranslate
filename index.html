@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Manga Voice Translation</title>
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <!-- <meta name="theme-color" content="#F8F7F8" />
+    <link rel="manifest" href="./manifest.json" /> -->
+    <!-- <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js");
+      }
+    </script> -->
+  </head>
+  <body>
+    <main>
+      <div id="viewerBox">
+        <div id="originalPicBox">
+          <img src="img/p1.png" />
+          <canvas id="canvas_original"></canvas>
+        </div>
+        <div id="translatedPicBox">
+          <img src="img/p1.png" />
+          <canvas id="canvas_translated"></canvas>
+        </div>
+      </div>
+          <nav id="controllerBox">
+            <div id="nextPage">←</div>
+            <button id="clear_btn">クリア</button>
+            <button type="button" id="drowingmodeSelectBtn">図形の選択</button>
+            <div id="backPage">→</div>
+          </nav>
+      <div id="inputTextBoxes" class="inputTextBoxes">
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="js/fabric.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
