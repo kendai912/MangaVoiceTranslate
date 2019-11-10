@@ -19,7 +19,16 @@ $(function() {
   const database = firebase.database();
 
   //----------------------------------------------------
-
+  //受信
+  //----------------------------------------------------
+  database.ref("LoveHina/P1").on("value", function(data) {
+    try {
+      $("#viewerTranslatedPic_en").attr("src", data.val().translatedPic_en);
+    } catch (e) {
+      console.log("translatedPic on firebase is not set");
+    }
+  });
+  //----------------------------------------------------
   const SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
   const recognition = new SpeechRecognition();
   recognition.lang = "ja-JP";
@@ -319,6 +328,13 @@ $(function() {
         $("#translatedTextBox_" + fukidashiId).val()
       );
       canvas_translated.renderAll();
+
+      //save in Firebase
+      database.ref("LoveHina/P1").set({
+        originalPic: JSON.stringify("img/p1.png"),
+        translatedPic_en: $("#canvas_translated")[0].toDataURL(),
+        translatedCanvas_en: JSON.stringify(canvas_translated)
+      });
     });
   });
 });

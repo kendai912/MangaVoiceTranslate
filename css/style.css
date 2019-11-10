@@ -12,7 +12,7 @@ main {
   margin: 0 auto;
 }
 
-#viewerBox {
+#panelBox {
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -34,6 +34,34 @@ main {
   object-fit: cover;
   z-index: -100;
   vertical-align: bottom;
+}
+
+#viewerBox {
+  position: relative;
+  width: auto;
+  height: 80vh;
+  margin: 0;
+  z-index: 0;
+}
+
+#viewerOriginalPic {
+  width: auto;
+  height: 100%;
+  object-fit: cover;
+  z-index: -100;
+  vertical-align: bottom;
+}
+
+#viewerTranslatedPic_en {
+  position: absolute;
+  width: auto;
+  height: 100%;
+  top: 0px;
+  left: 0px;
+  border: 1px solid blue;
+  background: transparent;
+  touch-action: none;
+  user-select: none;
 }
 
 .canvasFmt {
