@@ -15,7 +15,7 @@ main {
 #panelBox {
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  align-items: top;
 }
 
 #originalPicBox,
@@ -52,9 +52,9 @@ main {
   vertical-align: bottom;
 }
 
-#viewerTranslatedPic_en {
+#viewerTranslatedPic {
   position: absolute;
-  width: auto;
+  width: 100%;
   height: 100%;
   top: 0px;
   left: 0px;
@@ -68,10 +68,12 @@ main {
   position: absolute;
   top: 0px;
   left: 0px;
-  border: 1px solid blue;
+  border: 0.1px solid blue;
+  box-sizing: border-box;
   background: transparent;
   touch-action: none;
   user-select: none;
+  line-height: 0;
 }
 
 #controllerBox {

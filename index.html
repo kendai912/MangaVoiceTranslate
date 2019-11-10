@@ -7,6 +7,7 @@
     <title>Manga Voice Translation</title>
     <link rel="stylesheet" href="css/reset.css" />
     <link rel="stylesheet" href="css/style.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.css" rel="stylesheet">
     <!-- <meta name="theme-color" content="#F8F7F8" />
     <link rel="manifest" href="./manifest.json" /> -->
     <!-- <script>
@@ -19,19 +20,18 @@
     <main>
       <div id="panelBox">
         <div id="originalPicBox">
-          <img src="img/p1.png" />
+          <div class="fotorama_original" data-auto="false" data-keyboard="true" data-nav="thumbs" data-arrows="false">
+          </div>
           <canvas id="canvas_original"></canvas>
         </div>
         <div id="translatedPicBox">
-          <img src="img/p1.png" />
+            <img src=""/>
           <canvas id="canvas_translated"></canvas>
         </div>
       </div>
           <nav id="controllerBox">
-            <div id="nextPage">←</div>
             <button id="clear_btn">クリア</button>
             <button type="button" id="drowingmodeSelectBtn">図形の選択</button>
-            <div id="backPage">→</div>
           </nav>
       <div id="inputTextBoxes" class="inputTextBoxes">
     </main>
@@ -39,6 +39,7 @@
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.2.1/firebase.js"></script>
     <script src="js/fabric.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>

@@ -19,15 +19,41 @@ $(function() {
   const database = firebase.database();
 
   //----------------------------------------------------
-  //受信
+  //受信(ビューワ)
   //----------------------------------------------------
-  database.ref("LoveHina/P1").on("value", function(data) {
+  database.ref("LoveHina/p3").on("value", function(data) {
     try {
-      $("#viewerTranslatedPic_en").attr("src", data.val().translatedPic_en);
+      $("#viewerTranslatedPic").attr("src", data.val().translatedPic_en);
     } catch (e) {
       console.log("translatedPic on firebase is not set");
     }
   });
+
+  //----------------------------------------------------
+  //翻訳画面ロード
+  //----------------------------------------------------
+  let title;
+  // Initialize fotorama manually.
+  var $fotoramaDiv_original = $(".fotorama_original").fotorama();
+
+  // Get the API object.
+  var fotorama_original = $fotoramaDiv_original.data("fotorama");
+
+  //  Load imgs
+  let numOfPics = 3;
+  for (let i = numOfPics; i > 0; i--) {
+    fotorama_original.push({
+      img: "img/LoveHina_p" + i + ".png"
+    });
+  }
+
+  setTimeout(function() {
+    $(".fotorama__img").attr("style", "top: 0px");
+  }, 400);
+  fotorama_original.show(numOfPics);
+
+  //----------------------------------------------------
+  //ファンクション(speechRecognition関連)
   //----------------------------------------------------
   const SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
   const recognition = new SpeechRecognition();
@@ -92,6 +118,9 @@ $(function() {
     }
   }
 
+  //----------------------------------------------------
+  //ファンクション(翻訳関連)
+  //----------------------------------------------------
   function showTranslatedText(fukidashiId, text) {
     $.ajax({
       type: "post",
@@ -225,6 +254,27 @@ $(function() {
     return fukidashiTextBoxHTML;
   }
 
+  function getPageNum() {
+    let pageNum = fotorama_original.activeFrame.img.slice(-6, -4);
+
+    return pageNum;
+  }
+
+  //----------------------------------------------------
+  //ファンクション(Firebase関連)
+  //----------------------------------------------------
+  function saveInFirebase() {
+    // database.ref(title + "/" + pageNum).set({
+    database.ref("LoveHina/" + getPageNum()).set({
+      // originalPic: JSON.stringify("img/" + title + "_ " + pageNum + ".png"),
+      originalPic: JSON.stringify(
+        "img/LoveHina" + "_ " + getPageNum() + ".png"
+      ),
+      translatedPic_en: $("#canvas_translated")[0].toDataURL(),
+      translatedCanvas_en: JSON.stringify(canvas_translated)
+    });
+  }
+
   //----------------------------------------------------
   // Canvas
   //----------------------------------------------------
@@ -241,9 +291,9 @@ $(function() {
   $(".lower-canvas").removeAttr("style");
   $(".upper-canvas").removeAttr("style");
   canvas_original.setWidth(400);
-  canvas_original.setHeight(548);
+  canvas_original.setHeight(548.25);
   canvas_translated.setWidth(400);
-  canvas_translated.setHeight(548);
+  canvas_translated.setHeight(548.25);
   $(".canvas-container").addClass("canvasFmt");
   $(".lower-canvas").addClass("canvasFmt");
   $(".upper-canvas").addClass("canvasFmt");
@@ -314,7 +364,7 @@ $(function() {
     canvas_translated.renderAll();
 
     //----------------------------------------------------
-    // Events
+    // Canvasイベント
     //----------------------------------------------------
     $("#inputTextBoxes").append(createFukidashiTextBoxHTML(fukidashiId));
 
@@ -329,12 +379,26 @@ $(function() {
       );
       canvas_translated.renderAll();
 
-      //save in Firebase
-      database.ref("LoveHina/P1").set({
-        originalPic: JSON.stringify("img/p1.png"),
-        translatedPic_en: $("#canvas_translated")[0].toDataURL(),
-        translatedCanvas_en: JSON.stringify(canvas_translated)
-      });
+      saveInFirebase();
+      // let pageNum = fotorama_original.activeFrame.img.slice(-6, -4);
+      // //save in Firebase
+      // // database.ref(title + "/" + pageNum).set({
+      // database.ref("LoveHina/" + pageNum).set({
+      //   // originalPic: JSON.stringify("img/" + title + "_ " + pageNum + ".png"),
+      //   originalPic: JSON.stringify("img/LoveHina" + "_ " + pageNum + ".png"),
+      //   translatedPic_en: $("#canvas_translated")[0].toDataURL(),
+      //   translatedCanvas_en: JSON.stringify(canvas_translated)
+      // });
     });
+  });
+
+  //----------------------------------------------------
+  //翻訳画面イベント
+  //----------------------------------------------------
+  $(".fotorama_original").on("fotorama:showend ", function() {
+    console.log(fotorama_original.activeIndex);
+    console.log(fotorama_original.activeFrame.img);
+    $("#translatedPicBox img").attr("src", fotorama_original.activeFrame.img);
+    canvas_translated.clear().renderAll();
   });
 });
