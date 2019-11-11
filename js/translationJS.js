@@ -38,7 +38,7 @@ $(function() {
 
   setTimeout(function() {
     $(".fotorama__img").attr("style", "top: 0px");
-  }, 400);
+  }, 500);
   fotorama_original.show(numOfPics);
 
   //----------------------------------------------------
@@ -79,12 +79,12 @@ $(function() {
       recognizedText = text + event.results[0][0].transcript;
       // console.log("text = " + text);
       // console.log("transcript = " + event.results[0][0].transcript);
-      console.log("outputbox = " + outputBox);
-      console.log("...writing in outputbox = " + recognizedText);
+      // console.log("outputbox = " + outputBox);
+      // console.log("...writing in outputbox = " + recognizedText);
 
       $(outputBox).val(recognizedText);
       let fukidashiId = outputBox.slice(-1);
-      console.log("fukidashiId = " + fukidashiId);
+      // console.log("fukidashiId = " + fukidashiId);
       showTranslatedText(fukidashiId, recognizedText);
       if (event.results[0].isFinal) {
         console.log("最終結果");
@@ -94,7 +94,7 @@ $(function() {
           console.log("停止後再開");
           // console.log("outputBox = " + $(outputBox).val());
           voiceRecognizeStart(outputBox, $(outputBox).val());
-        }, 400);
+        }, 500);
       }
     };
 
@@ -124,9 +124,6 @@ $(function() {
         model: "nmt"
       },
       success: function(json_data) {
-        // console.log(
-        //   "json_data = " + json_data.data.translations[0].translatedText
-        // );
         $("#translatedTextBox_" + fukidashiId)
           .html(json_data.data.translations[0].translatedText)
           .change();
@@ -138,6 +135,127 @@ $(function() {
     });
   }
 
+  function createFukidashiTextBoxHTML(fukidashiId) {
+    let fukidashiTextBoxHTML =
+      '<div class="inputTextBox"><div id="no_' +
+      fukidashiId +
+      '">' +
+      fukidashiId +
+      '</div><textarea id="voiceInputBox_' +
+      fukidashiId +
+      '" class="voiceInputBox" cols="60" rows="2"></textarea><textarea id="translatedTextBox_' +
+      fukidashiId +
+      '" class="translatedTextBox" cols="60" rows="2"></textarea></div>';
+
+    return fukidashiTextBoxHTML;
+  }
+
+  function getPageNum() {
+    let pageNum = fotorama_original.activeFrame.img.slice(-6, -4);
+
+    return pageNum;
+  }
+
+  //----------------------------------------------------
+  //ファンクション(Firebase関連)
+  //----------------------------------------------------
+  function saveInFirebase() {
+    // 画像関連の保存
+    database.ref("LoveHina/" + getPageNum() + "/views/").set({
+      // originalPic: JSON.stringify("img/" + title + "_ " + pageNum + ".png"),
+      originalPic: JSON.stringify(
+        "img/LoveHina" + "_ " + getPageNum() + ".png"
+      ),
+      translatedPic_en: $("#canvas_translated")[0].toDataURL(),
+      translatedCanvas_en: JSON.stringify(canvas_translated)
+    });
+
+    //吹き出し関連の保存
+    for (let i = 1; i <= fukidashiId; i++) {
+      database
+        .ref("LoveHina/" + getPageNum() + "/fukidashi/" + fukidashiId + "/")
+        .set({
+          top: fukidashiArray["canvasGroup_" + fukidashiId].top,
+          left: fukidashiArray["canvasGroup_" + fukidashiId].left,
+          width: fukidashiArray["canvasGroup_" + fukidashiId].width,
+          height: fukidashiArray["canvasGroup_" + fukidashiId].height,
+          ja: $("#voiceInputBox_" + fukidashiId).val(),
+          en: $("#translatedTextBox_" + fukidashiId).val()
+        });
+    }
+  }
+
+  //----------------------------------------------------
+  //ファンクション(Canvas関連)
+  //----------------------------------------------------
+  function addFukidashi(
+    fukidashiArray,
+    textWidth,
+    textHeight,
+    topPosition,
+    leftPosition
+  ) {
+    fukidashiArray["canvasRec_" + fukidashiId] = new fabric.Rect({
+      width: textWidth,
+      height: textHeight,
+      fill: "#FFFFFF",
+      selectable: false
+    });
+    fukidashiArray["canvasText_" + fukidashiId] = new fabric.Textbox("", {
+      fill: "#000000",
+      fontSize: 10,
+      top: 0,
+      width: textWidth,
+      breakWords: true
+    });
+    fukidashiArray["canvasGroup_" + fukidashiId] = new fabric.Group(
+      [
+        fukidashiArray["canvasRec_" + fukidashiId],
+        fukidashiArray["canvasText_" + fukidashiId]
+      ],
+      {
+        top: topPosition,
+        left: leftPosition,
+        selectable: true
+      }
+    );
+
+    canvas_translated.add(fukidashiArray["canvasGroup_" + fukidashiId]);
+  }
+
+  function loadFukidashi(fukidashiArray, width, height, top, left) {
+    addFukidashi(fukidashiArray, width, height, top, left);
+    fukidashiArray["canvasText_" + fukidashiId].set(
+      "text",
+      $("#translatedTextBox_" + fukidashiId).val()
+    );
+    canvas_translated.renderAll();
+  }
+
+  //----------------------------------------------------
+  // Canvas設定
+  //----------------------------------------------------
+
+  let mouseDownX;
+  let mouseDownY;
+  let mouseUpX;
+  let mouseUpY;
+  let canvas_original = new fabric.Canvas("canvas_original");
+  let canvas_translated = new fabric.Canvas("canvas_translated");
+  let fukidashiId = 0;
+  let fukidashiArray = {};
+  $(".canvas-container").removeAttr("style");
+  $(".lower-canvas").removeAttr("style");
+  $(".upper-canvas").removeAttr("style");
+  canvas_original.setWidth(400);
+  canvas_original.setHeight(548.25);
+  canvas_translated.setWidth(400);
+  canvas_translated.setHeight(548.25);
+  $(".canvas-container").addClass("canvasFmt");
+  $(".lower-canvas").addClass("canvasFmt");
+  $(".upper-canvas").addClass("canvasFmt");
+
+  //吹き出し内の折返し設定処理
   var _wrapLine = function(_line, lineIndex, desiredWidth, reservedSpace) {
     var lineWidth = 0,
       splitByGrapheme = this.splitByGrapheme,
@@ -228,69 +346,13 @@ $(function() {
     _wrapLine: _wrapLine
   });
 
-  function createFukidashiTextBoxHTML(fukidashiId) {
-    let fukidashiTextBoxHTML =
-      '<div class="inputTextBox"><div id="no_' +
-      fukidashiId +
-      '">' +
-      fukidashiId +
-      '</div><textarea id="voiceInputBox_' +
-      fukidashiId +
-      '" class="voiceInputBox" cols="60" rows="2"></textarea><textarea id="translatedTextBox_' +
-      fukidashiId +
-      '" class="translatedTextBox" cols="60" rows="2"></textarea></div>';
-
-    return fukidashiTextBoxHTML;
-  }
-
-  function getPageNum() {
-    let pageNum = fotorama_original.activeFrame.img.slice(-6, -4);
-
-    return pageNum;
-  }
-
-  //----------------------------------------------------
-  //ファンクション(Firebase関連)
-  //----------------------------------------------------
-  function saveInFirebase() {
-    // database.ref(title + "/" + pageNum).set({
-    database.ref("LoveHina/" + getPageNum()).set({
-      // originalPic: JSON.stringify("img/" + title + "_ " + pageNum + ".png"),
-      originalPic: JSON.stringify(
-        "img/LoveHina" + "_ " + getPageNum() + ".png"
-      ),
-      translatedPic_en: $("#canvas_translated")[0].toDataURL(),
-      translatedCanvas_en: JSON.stringify(canvas_translated)
-    });
-  }
-
-  //----------------------------------------------------
-  // Canvas設定
-  //----------------------------------------------------
-
-  let mouseDownX;
-  let mouseDownY;
-  let mouseUpX;
-  let mouseUpY;
-  let canvas_original = new fabric.Canvas("canvas_original");
-  let canvas_translated = new fabric.Canvas("canvas_translated");
-  let fukidashiId = 0;
-  let fukidashiArray = {};
-  $(".canvas-container").removeAttr("style");
-  $(".lower-canvas").removeAttr("style");
-  $(".upper-canvas").removeAttr("style");
-  canvas_original.setWidth(400);
-  canvas_original.setHeight(548.25);
-  canvas_translated.setWidth(400);
-  canvas_translated.setHeight(548.25);
-  $(".canvas-container").addClass("canvasFmt");
-  $(".lower-canvas").addClass("canvasFmt");
-  $(".upper-canvas").addClass("canvasFmt");
-
   //----------------------------------------------------
   // Canvasイベント
   //----------------------------------------------------
   $("#clear_btn").on("click", function() {
+    database.ref("LoveHina/" + getPageNum() + "/views").set({});
+    database.ref("LoveHina/" + getPageNum() + "/fukidashi").set({});
+    fukidashiId = 0;
     canvas_translated.clear().renderAll();
     $("#inputTextBoxes").html("");
   });
@@ -332,32 +394,39 @@ $(function() {
     // console.log("leftPosition = " + leftPosition);
     // console.log("textWidth = " + textWidth);
 
-    fukidashiArray["canvasRec_" + fukidashiId] = new fabric.Rect({
-      width: textWidth,
-      height: textHeight,
-      fill: "#FFFFFF",
-      selectable: false
-    });
-    fukidashiArray["canvasText_" + fukidashiId] = new fabric.Textbox("", {
-      fill: "#000000",
-      fontSize: 10,
-      top: 0,
-      width: textWidth,
-      breakWords: true
-    });
-    fukidashiArray["canvasGroup_" + fukidashiId] = new fabric.Group(
-      [
-        fukidashiArray["canvasRec_" + fukidashiId],
-        fukidashiArray["canvasText_" + fukidashiId]
-      ],
-      {
-        top: topPosition,
-        left: leftPosition,
-        selectable: true
-      }
-    );
+    // fukidashiArray["canvasRec_" + fukidashiId] = new fabric.Rect({
+    //   width: textWidth,
+    //   height: textHeight,
+    //   fill: "#FFFFFF",
+    //   selectable: false
+    // });
+    // fukidashiArray["canvasText_" + fukidashiId] = new fabric.Textbox("", {
+    //   fill: "#000000",
+    //   fontSize: 10,
+    //   top: 0,
+    //   width: textWidth,
+    //   breakWords: true
+    // });
+    // fukidashiArray["canvasGroup_" + fukidashiId] = new fabric.Group(
+    //   [
+    //     fukidashiArray["canvasRec_" + fukidashiId],
+    //     fukidashiArray["canvasText_" + fukidashiId]
+    //   ],
+    //   {
+    //     top: topPosition,
+    //     left: leftPosition,
+    //     selectable: true
+    //   }
+    // );
 
-    canvas_translated.add(fukidashiArray["canvasGroup_" + fukidashiId]);
+    // canvas_translated.add(fukidashiArray["canvasGroup_" + fukidashiId]);
+    addFukidashi(
+      fukidashiArray,
+      textWidth,
+      textHeight,
+      topPosition,
+      leftPosition
+    );
     canvas_translated.renderAll();
 
     $("#inputTextBoxes").append(createFukidashiTextBoxHTML(fukidashiId));
@@ -376,6 +445,7 @@ $(function() {
       );
       canvas_translated.renderAll();
 
+      //Firebaseに保存
       saveInFirebase();
     });
   });
@@ -384,8 +454,45 @@ $(function() {
   //スライド遷移イベント
   //----------------------------------------------------
   $(".fotorama_original").on("fotorama:showend ", function() {
+    //初期化処理
+    let flagInit = true;
+    fukidashiId = 0;
+    fukidashiArray = {};
     $("#translatedPicBox img").attr("src", fotorama_original.activeFrame.img);
     canvas_translated.clear().renderAll();
     $("#inputTextBoxes").html("");
+
+    //Firebaseのデータをロード
+    let pageNum = getPageNum();
+    database
+      .ref("LoveHina/" + pageNum + "/fukidashi")
+      .on("value", function(data) {
+        try {
+          console.log(data.val());
+          $.each(data.val(), function(index, value) {
+            //最初の読み込み時のみロード
+            if (index != 0 && flagInit) {
+              console.log("index = " + index);
+              console.log("value = " + value);
+              fukidashiId = index;
+              $("#inputTextBoxes").append(
+                createFukidashiTextBoxHTML(fukidashiId)
+              );
+              $("#voiceInputBox_" + fukidashiId).val(value.ja);
+              $("#translatedTextBox_" + fukidashiId).val(value.en);
+              loadFukidashi(
+                fukidashiArray,
+                value.width,
+                value.height,
+                value.top,
+                value.left
+              );
+            }
+          });
+          flagInit = false;
+        } catch (e) {
+          console.log("firebase is not set");
+        }
+      });
   });
 });

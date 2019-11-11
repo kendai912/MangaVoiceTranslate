@@ -50,16 +50,23 @@ $(function() {
   }
 
   //----------------------------------------------------
-  //イベント
+  //イベント(翻訳吹き出しロード)
   //----------------------------------------------------
-  $(".fotorama_viewer").on("fotorama:show ", function() {
-    // $("#translatedPicBox img").attr("src", fotorama_original.activeFrame.img);
-    // canvas_translated.clear().renderAll();
-    //----------------------------------------------------
-    //翻訳吹き出しロード
-    //----------------------------------------------------
+  //初期読み込み
+  $(".fotorama_viewer").on("fotorama:ready ", function() {
     let pageNum = getPageNum();
-    database.ref("LoveHina/" + pageNum).on("value", function(data) {
+    database.ref("LoveHina/" + pageNum + "/views").on("value", function(data) {
+      try {
+        $("#viewerTranslatedPic").attr("src", data.val().translatedPic_en);
+      } catch (e) {
+        console.log("translatedPic on firebase is not set");
+      }
+    });
+  });
+  //画面スライド時
+  $(".fotorama_viewer").on("fotorama:show ", function() {
+    let pageNum = getPageNum();
+    database.ref("LoveHina/" + pageNum + "/views").on("value", function(data) {
       try {
         $("#viewerTranslatedPic").attr("src", data.val().translatedPic_en);
       } catch (e) {
