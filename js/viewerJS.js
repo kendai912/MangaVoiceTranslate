@@ -1,6 +1,8 @@
 $(function() {
   "use strict";
 
+  let lan = "en";
+
   //----------------------------------------------------
   // Initialize Firebase
   //----------------------------------------------------
@@ -49,29 +51,37 @@ $(function() {
     return pageNum;
   }
 
+  function refresh() {
+    let pageNum = getPageNum();
+    $("#viewerTranslatedPic").attr("src", "");
+    database
+      .ref("LoveHina/" + pageNum + "/" + lan + "/views")
+      .on("value", function(data) {
+        try {
+          $("#viewerTranslatedPic").attr(
+            "src",
+            data.val()["translatedPic_" + lan]
+          );
+        } catch (e) {
+          console.log("translatedPic on firebase is not set");
+        }
+      });
+  }
+
   //----------------------------------------------------
-  //イベント(翻訳吹き出しロード)
+  //イベント
   //----------------------------------------------------
   //初期読み込み
   $(".fotorama_viewer").on("fotorama:ready ", function() {
-    let pageNum = getPageNum();
-    database.ref("LoveHina/" + pageNum + "/views").on("value", function(data) {
-      try {
-        $("#viewerTranslatedPic").attr("src", data.val().translatedPic_en);
-      } catch (e) {
-        console.log("translatedPic on firebase is not set");
-      }
-    });
+    refresh();
   });
   //画面スライド時
   $(".fotorama_viewer").on("fotorama:show ", function() {
-    let pageNum = getPageNum();
-    database.ref("LoveHina/" + pageNum + "/views").on("value", function(data) {
-      try {
-        $("#viewerTranslatedPic").attr("src", data.val().translatedPic_en);
-      } catch (e) {
-        console.log("translatedPic on firebase is not set");
-      }
-    });
+    refresh();
+  });
+  //言語選択変更時
+  $("#translatedLanguageViewer").on("change", function() {
+    lan = $("#translatedLanguageViewer").val();
+    refresh();
   });
 });

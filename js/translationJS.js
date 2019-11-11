@@ -22,6 +22,8 @@ $(function() {
   //翻訳画面ロード
   //----------------------------------------------------
   let title;
+  let lan = "en";
+
   // Initialize fotorama manually.
   var $fotoramaDiv_original = $(".fotorama_original").fotorama();
 
@@ -83,7 +85,7 @@ $(function() {
       // console.log("...writing in outputbox = " + recognizedText);
 
       $(outputBox).val(recognizedText);
-      let fukidashiIdSliced
+      let fukidashiIdSliced;
       if (outputBox.length == 16) {
         fukidashiIdSliced = outputBox.slice(-1);
       } else if (outputBox.length == 17) {
@@ -137,7 +139,8 @@ $(function() {
         q: text,
         format: "text",
         source: "ja",
-        target: "en",
+        // target: "en",
+        target: lan,
         model: "nmt"
       },
       success: function(json_data) {
@@ -179,30 +182,116 @@ $(function() {
     return pageNum;
   }
 
+  function refresh() {
+    //初期化処理
+    let flagInit = true;
+    fukidashiId = 0;
+    fukidashiArrayOriginal = {};
+    fukidashiArrayTranslated = {};
+    $("#translatedPicBox img").attr("src", fotorama_original.activeFrame.img);
+    canvas_original.clear().renderAll();
+    canvas_translated.clear().renderAll();
+    $("#inputTextBoxes").html("");
+
+    //Firebaseのデータをロード
+    let pageNum = getPageNum();
+    database
+      .ref("LoveHina/" + pageNum + "/" + lan + "/fukidashi")
+      .on("value", function(data) {
+        try {
+          $.each(data.val(), function(index, value) {
+            //最初の読み込み時のみ
+            if (index != 0 && flagInit) {
+              fukidashiId = index;
+
+              //テキストボックス＆吹き出しのロード
+              $("#inputTextBoxes").append(
+                createFukidashiTextBoxHTML(fukidashiId)
+              );
+              $("#voiceInputBox_" + fukidashiId).val(value.ja);
+              $("#trslatedTextBox" + fukidashiId).val(value[lan]);
+              loadFukidashiOriginal(
+                fukidashiArrayOriginal,
+                value.width,
+                value.height,
+                value.top,
+                value.left
+              );
+              loadFukidashiTranslated(
+                fukidashiArrayTranslated,
+                value.width,
+                value.height,
+                value.top,
+                value.left
+              );
+            }
+          });
+
+          // テキストボックスイベント設定
+          if (flagInit) {
+            for (let i = 1; i <= fukidashiId; i++) {
+              $("#voiceInputBox_" + i).on("click", function() {
+                voiceRecognizeReStart(
+                  "#voiceInputBox_" + i,
+                  $("#voiceInputBox_" + i).val()
+                );
+              });
+
+              $("#voiceInputBox_" + i).on("keyup", function() {
+                showTranslatedText(i, $("#voiceInputBox_" + i).val());
+              });
+
+              $("#trslatedTextBox" + i).on("keyup", function() {
+                fukidashiArrayTranslated["canvasText_" + i].set(
+                  "text",
+                  $("#trslatedTextBox" + i).val()
+                );
+                canvas_translated.renderAll();
+
+                //Firebaseに保存
+                saveInFirebase();
+              });
+            }
+          }
+
+          flagInit = false;
+        } catch (e) {
+          console.log("firebase is not set");
+        }
+      });
+  }
+
   //----------------------------------------------------
   //ファンクション(Firebase関連)
   //----------------------------------------------------
   function saveInFirebase() {
     // 画像関連の保存
-    database.ref("LoveHina/" + getPageNum() + "/views/").set({
+    let translatedPic = "translatedPic_" + lan;
+    let translatedCanvas = "translatedCanvas_" + lan;
+    database.ref("LoveHina/" + getPageNum() + "/" + lan + "/views/").set({
       // originalPic: JSON.stringify("img/" + title + "_ " + pageNum + ".png"),
       originalPic: JSON.stringify(
         "img/LoveHina" + "_ " + getPageNum() + ".png"
       ),
-      translatedPic_en: $("#canvas_translated")[0].toDataURL(),
-      translatedCanvas_en: JSON.stringify(canvas_translated)
+      // translatedPic_en: $("#canvas_translated")[0].toDataURL(),
+      // translatedCanvas_en: JSON.stringify(canvas_translated)
+      [translatedPic]: $("#canvas_translated")[0].toDataURL(),
+      [translatedCanvas]: JSON.stringify(canvas_translated)
     });
 
     //吹き出し関連の保存
     for (let i = 1; i <= fukidashiId; i++) {
-      database.ref("LoveHina/" + getPageNum() + "/fukidashi/" + i + "/").set({
-        top: fukidashiArrayTranslated["canvasGroup_" + i].top,
-        left: fukidashiArrayTranslated["canvasGroup_" + i].left,
-        width: fukidashiArrayTranslated["canvasGroup_" + i].width,
-        height: fukidashiArrayTranslated["canvasGroup_" + i].height,
-        ja: $("#voiceInputBox_" + i).val(),
-        en: $("#trslatedTextBox" + i).val()
-      });
+      database
+        .ref("LoveHina/" + getPageNum() + "/" + lan + "/fukidashi/" + i + "/")
+        .set({
+          top: fukidashiArrayTranslated["canvasGroup_" + i].top,
+          left: fukidashiArrayTranslated["canvasGroup_" + i].left,
+          width: fukidashiArrayTranslated["canvasGroup_" + i].width,
+          height: fukidashiArrayTranslated["canvasGroup_" + i].height,
+          ja: $("#voiceInputBox_" + i).val(),
+          // en: $("#trslatedTextBox" + i).val()
+          [lan]: $("#trslatedTextBox" + i).val()
+        });
     }
   }
 
@@ -445,8 +534,8 @@ $(function() {
   // Canvasイベント
   //----------------------------------------------------
   $("#clear_btn").on("click", function() {
-    database.ref("LoveHina/" + getPageNum() + "/views").set({});
-    database.ref("LoveHina/" + getPageNum() + "/fukidashi").set({});
+    database.ref("LoveHina/" + getPageNum() + "/" + lan + "/views").set({});
+    database.ref("LoveHina/" + getPageNum() + "/" + lan + "/fukidashi").set({});
     fukidashiId = 0;
     canvas_original.clear().renderAll();
     canvas_translated.clear().renderAll();
@@ -539,143 +628,123 @@ $(function() {
   //スライド遷移イベント
   //----------------------------------------------------
   $(".fotorama_original").on("fotorama:showend ", function() {
-    //初期化処理
-    let flagInit = true;
-    fukidashiId = 0;
-    fukidashiArrayOriginal = {};
-    fukidashiArrayTranslated = {};
-    $("#translatedPicBox img").attr("src", fotorama_original.activeFrame.img);
-    canvas_original.clear().renderAll();
-    canvas_translated.clear().renderAll();
-    $("#inputTextBoxes").html("");
+    refresh();
+    // //初期化処理
+    // let flagInit = true;
+    // fukidashiId = 0;
+    // fukidashiArrayOriginal = {};
+    // fukidashiArrayTranslated = {};
+    // $("#translatedPicBox img").attr("src", fotorama_original.activeFrame.img);
+    // canvas_original.clear().renderAll();
+    // canvas_translated.clear().renderAll();
+    // $("#inputTextBoxes").html("");
 
-    //Firebaseのデータをロード
-    let pageNum = getPageNum();
-    database
-      .ref("LoveHina/" + pageNum + "/fukidashi")
-      .on("value", function(data) {
-        try {
-          $.each(data.val(), function(index, value) {
-            //最初の読み込み時のみ
-            if (index != 0 && flagInit) {
-              fukidashiId = index;
-              console.log(fukidashiId);
+    // //Firebaseのデータをロード
+    // let pageNum = getPageNum();
+    // database
+    //   .ref("LoveHina/" + pageNum + "/" + lan + "/fukidashi")
+    //   .on("value", function(data) {
+    //     try {
+    //       $.each(data.val(), function(index, value) {
+    //         //最初の読み込み時のみ
+    //         if (index != 0 && flagInit) {
+    //           fukidashiId = index;
 
-              //テキストボックス＆吹き出しのロード
-              $("#inputTextBoxes").append(
-                createFukidashiTextBoxHTML(fukidashiId)
-              );
-              $("#voiceInputBox_" + fukidashiId).val(value.ja);
-              $("#trslatedTextBox" + fukidashiId).val(value.en);
-              loadFukidashiOriginal(
-                fukidashiArrayOriginal,
-                value.width,
-                value.height,
-                value.top,
-                value.left
-              );
-              loadFukidashiTranslated(
-                fukidashiArrayTranslated,
-                value.width,
-                value.height,
-                value.top,
-                value.left
-              );
+    //           //テキストボックス＆吹き出しのロード
+    //           $("#inputTextBoxes").append(
+    //             createFukidashiTextBoxHTML(fukidashiId)
+    //           );
+    //           $("#voiceInputBox_" + fukidashiId).val(value.ja);
+    //           $("#trslatedTextBox" + fukidashiId).val(value.en);
+    //           loadFukidashiOriginal(
+    //             fukidashiArrayOriginal,
+    //             value.width,
+    //             value.height,
+    //             value.top,
+    //             value.left
+    //           );
+    //           loadFukidashiTranslated(
+    //             fukidashiArrayTranslated,
+    //             value.width,
+    //             value.height,
+    //             value.top,
+    //             value.left
+    //           );
+    //         }
+    //       });
 
-              // テキストボックスイベント設定
-              // console.log("fukidashiId = " + fukidashiId);
-              // $("#voiceInputBox_" + fukidashiId).on("click", function() {
-              //   console.log(
-              //     "setting voiceInputBox click event: " + fukidashiId
-              //   );
-              //   voiceRecognizeReStart(
-              //     "#voiceInputBox_" + fukidashiId,
-              //     $("#voiceInputBox_" + fukidashiId).val()
-              //   );
-              // });
+    //       // テキストボックスイベント設定
+    //       if (flagInit) {
+    //         for (let i = 1; i <= fukidashiId; i++) {
+    //           $("#voiceInputBox_" + i).on("click", function() {
+    //             voiceRecognizeReStart(
+    //               "#voiceInputBox_" + i,
+    //               $("#voiceInputBox_" + i).val()
+    //             );
+    //           });
 
-              // $("#voiceInputBox_" + fukidashiId).on("keyup", function() {
-              //   console.log(
-              //     "setting voiceInputBox keyup event: " + fukidashiId
-              //   );
-              //   showTranslatedText(
-              //     fukidashiId,
-              //     $("#voiceInputBox_" + fukidashiId).val()
-              //   );
-              // });
+    //           $("#voiceInputBox_" + i).on("keyup", function() {
+    //             showTranslatedText(i, $("#voiceInputBox_" + i).val());
+    //           });
 
-              // $("#trslatedTextBox" + fukidashiId).on("keyup", function() {
-              //   fukidashiArrayTranslated["canvasText_" + fukidashiId].set(
-              //     "text",
-              //     $("#trslatedTextBox" + fukidashiId).val()
-              //   );
-              //   canvas_translated.renderAll();
+    //           $("#trslatedTextBox" + i).on("keyup", function() {
+    //             fukidashiArrayTranslated["canvasText_" + i].set(
+    //               "text",
+    //               $("#trslatedTextBox" + i).val()
+    //             );
+    //             canvas_translated.renderAll();
 
-              //   //Firebaseに保存
-              //   saveInFirebase();
-              // });
-            }
-          });
+    //             //Firebaseに保存
+    //             saveInFirebase();
+    //           });
+    //         }
+    //       }
 
-          // テキストボックスイベント設定
-          if (flagInit) {
-            console.log("fukidashiId = " + fukidashiId);
-            for (let i = 1; i <= fukidashiId; i++) {
-              $("#voiceInputBox_" + i).on("click", function() {
-                voiceRecognizeReStart(
-                  "#voiceInputBox_" + i,
-                  $("#voiceInputBox_" + i).val()
-                );
-              });
-
-              $("#voiceInputBox_" + i).on("keyup", function() {
-                showTranslatedText(i, $("#voiceInputBox_" + i).val());
-              });
-
-              $("#trslatedTextBox" + i).on("keyup", function() {
-                fukidashiArrayTranslated["canvasText_" + i].set(
-                  "text",
-                  $("#trslatedTextBox" + i).val()
-                );
-                canvas_translated.renderAll();
-
-                //Firebaseに保存
-                saveInFirebase();
-              });
-            }
-          }
-
-          flagInit = false;
-        } catch (e) {
-          console.log("firebase is not set");
-        }
-      });
-    console.log("----fukidashiId = " + fukidashiId);
-
-    // テキストボックスイベント設定
-    // console.log("fukidashiId = " + fukidashiId)
-    // for (let i = 1; i <= fukidashiId; i++) {
-    //   $("#voiceInputBox_" + i).on("click", function() {
-    //     voiceRecognizeReStart(
-    //       "#voiceInputBox_" + i,
-    //       $("#voiceInputBox_" + i).val()
-    //     );
+    //       flagInit = false;
+    //     } catch (e) {
+    //       console.log("firebase is not set");
+    //     }
     //   });
+  });
 
-    //   $("#voiceInputBox_" + i).on("keyup", function() {
-    //     showTranslatedText(i, $("#voiceInputBox_" + i).val());
+  //----------------------------------------------------
+  //言語選択イベント
+  //----------------------------------------------------
+  $("#translatedLanguage").on("change", function() {
+    console.log($(this).val());
+    lan = $(this).val();
+
+    refresh();
+    // let flagInit = true;
+    // fukidashiArrayTranslated = {};
+    // // canvas_translated.clear().renderAll();
+
+    // //Firebaseのデータをロード
+    // let pageNum = getPageNum();
+    // database
+    //   .ref("LoveHina/" + pageNum + "/" + lan + "/fukidashi")
+    //   .on("value", function(data) {
+    //     try {
+    //       $.each(data.val(), function(index, value) {
+    //         //最初の読み込み時のみ
+    //         if (index != 0 && flagInit) {
+    //           fukidashiId = index;
+    //           //翻訳テキストボックス＆吹き出しのロード
+    //           $("#trslatedTextBox" + fukidashiId).val(value[lan]);
+    //           loadFukidashiTranslated(
+    //             fukidashiArrayTranslated,
+    //             value.width,
+    //             value.height,
+    //             value.top,
+    //             value.left
+    //           );
+    //         }
+    //       });
+
+    //       flagInit = false;
+    //     } catch (e) {
+    //       console.log("firebase is not set");
+    //     }
     //   });
-
-    //   $("#trslatedTextBox" + i).on("keyup", function() {
-    //     fukidashiArrayTranslated["canvasText_" + i].set(
-    //       "text",
-    //       $("#trslatedTextBox" + i).val()
-    //     );
-    //     canvas_translated.renderAll();
-
-    //     //Firebaseに保存
-    //     saveInFirebase();
-    //   });
-    // }
   });
 });
