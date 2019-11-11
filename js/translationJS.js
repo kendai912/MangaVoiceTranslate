@@ -78,14 +78,14 @@ $(function() {
     recognition.onresult = event => {
       recognizedText = text + event.results[0][0].transcript;
       // console.log("text = " + text);
-      // console.log("transcript = " + event.results[0][0].transcript);
-      // console.log("outputbox = " + outputBox);
+      console.log("transcript = " + event.results[0][0].transcript);
+      console.log("outputbox = " + outputBox);
       // console.log("...writing in outputbox = " + recognizedText);
 
       $(outputBox).val(recognizedText);
-      let fukidashiId = outputBox.slice(-1);
-      // console.log("fukidashiId = " + fukidashiId);
-      showTranslatedText(fukidashiId, recognizedText);
+      let fukidashiIdSliced = outputBox.slice(-1);
+      console.log("fukidashiIdSliced = " + fukidashiIdSliced);
+      showTranslatedText(fukidashiIdSliced, recognizedText);
       if (event.results[0].isFinal) {
         console.log("最終結果");
         isListening = false;
@@ -107,6 +107,18 @@ $(function() {
     }
   }
 
+  function voiceRecognizeReStart(outputBox, text) {
+    isListening = false;
+    recognition.onsoundstart = event => {
+      recognition.stop();
+    };
+    recognition.onresult = null;
+    recognition.stop();
+    setTimeout(function() {
+      voiceRecognizeStart(outputBox, text);
+    }, 500);
+  }
+
   //----------------------------------------------------
   //ファンクション(翻訳関連)
   //----------------------------------------------------
@@ -124,9 +136,13 @@ $(function() {
         model: "nmt"
       },
       success: function(json_data) {
+        console.log(
+          "Json translatedText = " +
+            json_data.data.translations[0].translatedText
+        );
         $("#translatedTextBox_" + fukidashiId)
-          .html(json_data.data.translations[0].translatedText)
-          .change();
+          .val(json_data.data.translations[0].translatedText)
+          .keyup();
       },
       error: function() {
         // HTTPエラー時
@@ -172,46 +188,94 @@ $(function() {
 
     //吹き出し関連の保存
     for (let i = 1; i <= fukidashiId; i++) {
-      database
-        .ref("LoveHina/" + getPageNum() + "/fukidashi/" + fukidashiId + "/")
-        .set({
-          top: fukidashiArray["canvasGroup_" + fukidashiId].top,
-          left: fukidashiArray["canvasGroup_" + fukidashiId].left,
-          width: fukidashiArray["canvasGroup_" + fukidashiId].width,
-          height: fukidashiArray["canvasGroup_" + fukidashiId].height,
-          ja: $("#voiceInputBox_" + fukidashiId).val(),
-          en: $("#translatedTextBox_" + fukidashiId).val()
-        });
+      database.ref("LoveHina/" + getPageNum() + "/fukidashi/" + i + "/").set({
+        top: fukidashiArrayTranslated["canvasGroup_" + i].top,
+        left: fukidashiArrayTranslated["canvasGroup_" + i].left,
+        width: fukidashiArrayTranslated["canvasGroup_" + i].width,
+        height: fukidashiArrayTranslated["canvasGroup_" + i].height,
+        ja: $("#voiceInputBox_" + i).val(),
+        en: $("#translatedTextBox_" + i).val()
+      });
     }
   }
 
   //----------------------------------------------------
   //ファンクション(Canvas関連)
   //----------------------------------------------------
-  function addFukidashi(
-    fukidashiArray,
+  function addFukidashiOriginal(
+    fukidashiArrayOriginal,
     textWidth,
     textHeight,
     topPosition,
     leftPosition
   ) {
-    fukidashiArray["canvasRec_" + fukidashiId] = new fabric.Rect({
+    fukidashiArrayOriginal["canvasRec_" + fukidashiId] = new fabric.Rect({
+      width: textWidth,
+      height: textHeight,
+      fill: "transparent",
+      stroke: "blue",
+      selectable: false
+    });
+    fukidashiArrayOriginal["canvasText_" + fukidashiId] = new fabric.Textbox(
+      "",
+      {
+        fill: "white",
+        backgroundColor: "Blue",
+        fontSize: 10,
+        top: -10,
+        width: 10,
+        height: 10,
+        breakWords: true,
+        fontWeight: "bold",
+        textAlign: "center"
+      }
+    );
+    fukidashiArrayOriginal["canvasGroup_" + fukidashiId] = new fabric.Group(
+      [
+        fukidashiArrayOriginal["canvasRec_" + fukidashiId],
+        fukidashiArrayOriginal["canvasText_" + fukidashiId]
+      ],
+      {
+        top: topPosition - 10,
+        left: leftPosition,
+        selectable: true
+      }
+    );
+    fukidashiArrayOriginal["canvasText_" + fukidashiId].set(
+      "text",
+      String(fukidashiId)
+    );
+
+    canvas_original.add(fukidashiArrayOriginal["canvasGroup_" + fukidashiId]);
+  }
+
+  function addFukidashiTranslated(
+    fukidashiArrayTranslated,
+    textWidth,
+    textHeight,
+    topPosition,
+    leftPosition
+  ) {
+    fukidashiArrayTranslated["canvasRec_" + fukidashiId] = new fabric.Rect({
       width: textWidth,
       height: textHeight,
       fill: "#FFFFFF",
       selectable: false
     });
-    fukidashiArray["canvasText_" + fukidashiId] = new fabric.Textbox("", {
-      fill: "#000000",
-      fontSize: 10,
-      top: 0,
-      width: textWidth,
-      breakWords: true
-    });
-    fukidashiArray["canvasGroup_" + fukidashiId] = new fabric.Group(
+    fukidashiArrayTranslated["canvasText_" + fukidashiId] = new fabric.Textbox(
+      "",
+      {
+        fill: "#000000",
+        fontSize: 10,
+        top: 0,
+        width: textWidth,
+        breakWords: true
+      }
+    );
+    fukidashiArrayTranslated["canvasGroup_" + fukidashiId] = new fabric.Group(
       [
-        fukidashiArray["canvasRec_" + fukidashiId],
-        fukidashiArray["canvasText_" + fukidashiId]
+        fukidashiArrayTranslated["canvasRec_" + fukidashiId],
+        fukidashiArrayTranslated["canvasText_" + fukidashiId]
       ],
       {
         top: topPosition,
@@ -220,12 +284,35 @@ $(function() {
       }
     );
 
-    canvas_translated.add(fukidashiArray["canvasGroup_" + fukidashiId]);
+    canvas_translated.add(
+      fukidashiArrayTranslated["canvasGroup_" + fukidashiId]
+    );
   }
 
-  function loadFukidashi(fukidashiArray, width, height, top, left) {
-    addFukidashi(fukidashiArray, width, height, top, left);
-    fukidashiArray["canvasText_" + fukidashiId].set(
+  function loadFukidashiOriginal(
+    fukidashiArrayOriginal,
+    width,
+    height,
+    top,
+    left
+  ) {
+    addFukidashiOriginal(fukidashiArrayOriginal, width, height, top, left);
+    fukidashiArrayOriginal["canvasText_" + fukidashiId].set(
+      "text",
+      String(fukidashiId)
+    );
+    canvas_original.renderAll();
+  }
+
+  function loadFukidashiTranslated(
+    fukidashiArrayTranslated,
+    width,
+    height,
+    top,
+    left
+  ) {
+    addFukidashiTranslated(fukidashiArrayTranslated, width, height, top, left);
+    fukidashiArrayTranslated["canvasText_" + fukidashiId].set(
       "text",
       $("#translatedTextBox_" + fukidashiId).val()
     );
@@ -243,7 +330,8 @@ $(function() {
   let canvas_original = new fabric.Canvas("canvas_original");
   let canvas_translated = new fabric.Canvas("canvas_translated");
   let fukidashiId = 0;
-  let fukidashiArray = {};
+  let fukidashiArrayOriginal = {};
+  let fukidashiArrayTranslated = {};
   $(".canvas-container").removeAttr("style");
   $(".lower-canvas").removeAttr("style");
   $(".upper-canvas").removeAttr("style");
@@ -391,42 +479,22 @@ $(function() {
       leftPosition = mouseUpX;
       textWidth = mouseDownX - mouseUpX;
     }
-    // console.log("leftPosition = " + leftPosition);
-    // console.log("textWidth = " + textWidth);
 
-    // fukidashiArray["canvasRec_" + fukidashiId] = new fabric.Rect({
-    //   width: textWidth,
-    //   height: textHeight,
-    //   fill: "#FFFFFF",
-    //   selectable: false
-    // });
-    // fukidashiArray["canvasText_" + fukidashiId] = new fabric.Textbox("", {
-    //   fill: "#000000",
-    //   fontSize: 10,
-    //   top: 0,
-    //   width: textWidth,
-    //   breakWords: true
-    // });
-    // fukidashiArray["canvasGroup_" + fukidashiId] = new fabric.Group(
-    //   [
-    //     fukidashiArray["canvasRec_" + fukidashiId],
-    //     fukidashiArray["canvasText_" + fukidashiId]
-    //   ],
-    //   {
-    //     top: topPosition,
-    //     left: leftPosition,
-    //     selectable: true
-    //   }
-    // );
-
-    // canvas_translated.add(fukidashiArray["canvasGroup_" + fukidashiId]);
-    addFukidashi(
-      fukidashiArray,
+    addFukidashiOriginal(
+      fukidashiArrayOriginal,
       textWidth,
       textHeight,
       topPosition,
       leftPosition
     );
+    addFukidashiTranslated(
+      fukidashiArrayTranslated,
+      textWidth,
+      textHeight,
+      topPosition,
+      leftPosition
+    );
+    canvas_original.renderAll();
     canvas_translated.renderAll();
 
     $("#inputTextBoxes").append(createFukidashiTextBoxHTML(fukidashiId));
@@ -434,20 +502,29 @@ $(function() {
     //----------------------------------------------------
     // テキストボックスイベント
     //----------------------------------------------------
-    $("#voiceInputBox_" + fukidashiId).on("click", function() {
-      voiceRecognizeStart("#voiceInputBox_" + fukidashiId, "");
-    });
+    for (let i = 1; i <= fukidashiId; i++) {
+      $("#voiceInputBox_" + i).on("click", function() {
+        voiceRecognizeReStart(
+          "#voiceInputBox_" + i,
+          $("#voiceInputBox_" + i).val()
+        );
+      });
 
-    $("#translatedTextBox_" + fukidashiId).on("change", function() {
-      fukidashiArray["canvasText_" + fukidashiId].set(
-        "text",
-        $("#translatedTextBox_" + fukidashiId).val()
-      );
-      canvas_translated.renderAll();
+      $("#voiceInputBox_" + i).on("keyup", function() {
+        showTranslatedText(i, $("#voiceInputBox_" + i).val());
+      });
 
-      //Firebaseに保存
-      saveInFirebase();
-    });
+      $("#translatedTextBox_" + i).on("keyup", function() {
+        fukidashiArrayTranslated["canvasText_" + i].set(
+          "text",
+          $("#translatedTextBox_" + i).val()
+        );
+        canvas_translated.renderAll();
+
+        //Firebaseに保存
+        saveInFirebase();
+      });
+    }
   });
 
   //----------------------------------------------------
@@ -457,7 +534,7 @@ $(function() {
     //初期化処理
     let flagInit = true;
     fukidashiId = 0;
-    fukidashiArray = {};
+    fukidashiArrayTranslated = {};
     $("#translatedPicBox img").attr("src", fotorama_original.activeFrame.img);
     canvas_translated.clear().renderAll();
     $("#inputTextBoxes").html("");
@@ -468,27 +545,60 @@ $(function() {
       .ref("LoveHina/" + pageNum + "/fukidashi")
       .on("value", function(data) {
         try {
-          console.log(data.val());
           $.each(data.val(), function(index, value) {
-            //最初の読み込み時のみロード
+            //最初の読み込み時のみ
             if (index != 0 && flagInit) {
-              console.log("index = " + index);
-              console.log("value = " + value);
               fukidashiId = index;
+
+              //テキストボックス＆吹き出しのロード
               $("#inputTextBoxes").append(
                 createFukidashiTextBoxHTML(fukidashiId)
               );
               $("#voiceInputBox_" + fukidashiId).val(value.ja);
               $("#translatedTextBox_" + fukidashiId).val(value.en);
-              loadFukidashi(
-                fukidashiArray,
+              loadFukidashiOriginal(
+                fukidashiArrayOriginal,
                 value.width,
                 value.height,
                 value.top,
                 value.left
               );
+              loadFukidashiTranslated(
+                fukidashiArrayTranslated,
+                value.width,
+                value.height,
+                value.top,
+                value.left
+              );
+
+              // テキストボックスイベント設定
+              $("#voiceInputBox_" + fukidashiId).on("click", function() {
+                voiceRecognizeReStart(
+                  "#voiceInputBox_" + fukidashiId,
+                  $("#voiceInputBox_" + fukidashiId).val()
+                );
+              });
+
+              $("#voiceInputBox_" + fukidashiId).on("keyup", function() {
+                showTranslatedText(
+                  fukidashiId,
+                  $("#voiceInputBox_" + fukidashiId).val()
+                );
+              });
+
+              $("#translatedTextBox_" + fukidashiId).on("keyup", function() {
+                fukidashiArrayTranslated["canvasText_" + fukidashiId].set(
+                  "text",
+                  $("#translatedTextBox_" + fukidashiId).val()
+                );
+                canvas_translated.renderAll();
+
+                //Firebaseに保存
+                saveInFirebase();
+              });
             }
           });
+
           flagInit = false;
         } catch (e) {
           console.log("firebase is not set");
