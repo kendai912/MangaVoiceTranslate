@@ -34,7 +34,6 @@ $(function() {
   let numOfPics = 3;
   for (let i = numOfPics; i > 0; i--) {
     fotorama_viewer.push({
-      // img: "img/LoveHina_p" + i + ".png"
       img: "img/" + title + "_p" + i + ".png"
     });
   }
@@ -66,7 +65,6 @@ $(function() {
     let pageNum = getPageNum();
     $("#viewerTranslatedPic").attr("src", "");
     database
-      // .ref("LoveHina/" + pageNum + "/" + lan + "/views")
       .ref(title + "/" + pageNum + "/" + lan + "/views")
       .on("value", function(data) {
         try {

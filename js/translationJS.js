@@ -178,15 +178,20 @@ $(function() {
 
   function createFukidashiTextBoxHTML(fukidashiId) {
     let fukidashiTextBoxHTML =
-      '<div class="inputTextBox"><div id="no_' +
+      '<div class="inputTextBox">' +
+      '<div class="leftBox"><span id="no_' +
       String(fukidashiId) +
       '">' +
       String(fukidashiId) +
-      '</div><textarea id="voiceInputBox_' +
+      "</span>" +
+      '<textarea id="voiceInputBox_' +
       String(fukidashiId) +
-      '" class="voiceInputBox" cols="60" rows="2"></textarea><textarea id="trslatedTextBox' +
+      '" class="voiceInputBox" cols="60" rows="2"></textarea>' +
+      "</div>" +
+      '<div class="rightBox"><textarea id="trslatedTextBox' +
       String(fukidashiId) +
-      '" class="trslatedTextBox" cols="60" rows="2"></textarea></div>';
+      '" class="trslatedTextBox" cols="60" rows="2">' +
+      "</textarea></div></div>";
 
     return fukidashiTextBoxHTML;
   }

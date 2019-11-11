@@ -20,8 +20,12 @@
     </script> -->
   </head>
   <body>
+    <header>
+      <div class="siteName">
+        <a href="index.html">Manga Voice Translate</a>
+      </div>
+    </header>
     <main>
-      <button type="button" onclick='location.href="index.html"'>戻る</button>
       <div id="languageSettingBox">
         <div id="originalLanguageBox">
           <select id="originalLanguage">
@@ -35,6 +39,7 @@
           </select>
         </div>
       </div>
+
       <div id="panelBox">
         <div id="originalPicBox">
           <div
@@ -45,15 +50,16 @@
             data-arrows="false"
           ></div>
           <canvas id="canvas_original"></canvas>
+          <div class="controllerBox">
+            <button id="clear_btn">クリア</button>
+          </div>
         </div>
         <div id="translatedPicBox">
           <img src="" />
           <canvas id="canvas_translated"></canvas>
         </div>
       </div>
-      <nav id="controllerBox">
-        <button id="clear_btn">クリア</button>
-      </nav>
+
       <div id="inputTextBoxes" class="inputTextBoxes"></div>
     </main>
 

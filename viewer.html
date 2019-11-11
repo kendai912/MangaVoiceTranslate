@@ -13,23 +13,29 @@
     />
   </head>
   <body>
-    <button type="button" onclick='location.href="index.html"'>戻る</button>
-    <div id="translatedLanguageViewerBox">
-      <select id="translatedLanguageViewer">
-        <option value="en" selected>英語</option>
-        <option value="zh">中国語</option>
-      </select>
-    </div>
-    <div id="viewerBox">
-      <div
-        class="fotorama_viewer"
-        data-auto="false"
-        data-keyboard="true"
-        data-arrows="true"
-        data-transition="crossfade"
-      ></div>
-      <img id="viewerTranslatedPic" src="" />
-    </div>
+    <header>
+      <div class="siteName">
+        <a href="index.html">Manga Voice Translate</a>
+      </div>
+    </header>
+    <main>
+      <div id="translatedLanguageViewerBox">
+        <select id="translatedLanguageViewer">
+          <option value="en" selected>英語</option>
+          <option value="zh">中国語</option>
+        </select>
+      </div>
+      <div id="viewerBox">
+        <div
+          class="fotorama_viewer"
+          data-auto="false"
+          data-keyboard="true"
+          data-arrows="true"
+          data-transition="crossfade"
+        ></div>
+        <img id="viewerTranslatedPic" src="" />
+      </div>
+    </main>
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.2.1/firebase.js"></script>
