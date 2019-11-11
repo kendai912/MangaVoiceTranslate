@@ -14,14 +14,19 @@
   </head>
   <body>
     <div id="viewerBox">
-      <img id="viewerOriginalPic" src="img/LoveHina_p3.png" />
-      <img id="viewerTranslatedPic" src="" />
+      <div
+        class="fotorama_viewer"
+        data-auto="false"
+        data-keyboard="true"
+        data-arrows="true"
+      ></div>
+        <img id="viewerTranslatedPic" src="" />
     </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.2.1/firebase.js"></script>
     <script src="js/fabric.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/viewerJS.js"></script>
   </body>
 </html>

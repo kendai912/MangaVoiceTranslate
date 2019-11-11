@@ -38,18 +38,21 @@ main {
 
 #viewerBox {
   position: relative;
-  width: auto;
-  height: 80vh;
-  margin: 0;
+  width: 550px;
+  height: auto;
+  margin: 0 auto;
   z-index: 0;
 }
 
-#viewerOriginalPic {
-  width: auto;
-  height: 100%;
+#viewerBox img {
+  width: 100%;
+  height: auto;
   object-fit: cover;
-  z-index: -100;
   vertical-align: bottom;
+}
+
+.fotorama_viewer {
+  z-index: -100;
 }
 
 #viewerTranslatedPic {
@@ -59,6 +62,7 @@ main {
   top: 0px;
   left: 0px;
   border: 1px solid blue;
+  box-sizing: border-box;
   background: transparent;
   touch-action: none;
   user-select: none;
