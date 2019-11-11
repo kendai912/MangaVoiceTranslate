@@ -83,7 +83,12 @@ $(function() {
       // console.log("...writing in outputbox = " + recognizedText);
 
       $(outputBox).val(recognizedText);
-      let fukidashiIdSliced = outputBox.slice(-1);
+      let fukidashiIdSliced
+      if (outputBox.length == 16) {
+        fukidashiIdSliced = outputBox.slice(-1);
+      } else if (outputBox.length == 17) {
+        fukidashiIdSliced = outputBox.slice(-2);
+      }
       console.log("fukidashiIdSliced = " + fukidashiIdSliced);
       showTranslatedText(fukidashiIdSliced, recognizedText);
       if (event.results[0].isFinal) {
@@ -140,7 +145,9 @@ $(function() {
           "Json translatedText = " +
             json_data.data.translations[0].translatedText
         );
-        $("#translatedTextBox_" + fukidashiId)
+        console.log("fukidashiId = " + fukidashiId);
+        console.log("fukidashiId = " + String(fukidashiId));
+        $("#trslatedTextBox" + String(fukidashiId))
           .val(json_data.data.translations[0].translatedText)
           .keyup();
       },
@@ -154,14 +161,14 @@ $(function() {
   function createFukidashiTextBoxHTML(fukidashiId) {
     let fukidashiTextBoxHTML =
       '<div class="inputTextBox"><div id="no_' +
-      fukidashiId +
+      String(fukidashiId) +
       '">' +
-      fukidashiId +
+      String(fukidashiId) +
       '</div><textarea id="voiceInputBox_' +
-      fukidashiId +
-      '" class="voiceInputBox" cols="60" rows="2"></textarea><textarea id="translatedTextBox_' +
-      fukidashiId +
-      '" class="translatedTextBox" cols="60" rows="2"></textarea></div>';
+      String(fukidashiId) +
+      '" class="voiceInputBox" cols="60" rows="2"></textarea><textarea id="trslatedTextBox' +
+      String(fukidashiId) +
+      '" class="trslatedTextBox" cols="60" rows="2"></textarea></div>';
 
     return fukidashiTextBoxHTML;
   }
@@ -194,7 +201,7 @@ $(function() {
         width: fukidashiArrayTranslated["canvasGroup_" + i].width,
         height: fukidashiArrayTranslated["canvasGroup_" + i].height,
         ja: $("#voiceInputBox_" + i).val(),
-        en: $("#translatedTextBox_" + i).val()
+        en: $("#trslatedTextBox" + i).val()
       });
     }
   }
@@ -314,7 +321,7 @@ $(function() {
     addFukidashiTranslated(fukidashiArrayTranslated, width, height, top, left);
     fukidashiArrayTranslated["canvasText_" + fukidashiId].set(
       "text",
-      $("#translatedTextBox_" + fukidashiId).val()
+      $("#trslatedTextBox" + fukidashiId).val()
     );
     canvas_translated.renderAll();
   }
@@ -441,6 +448,7 @@ $(function() {
     database.ref("LoveHina/" + getPageNum() + "/views").set({});
     database.ref("LoveHina/" + getPageNum() + "/fukidashi").set({});
     fukidashiId = 0;
+    canvas_original.clear().renderAll();
     canvas_translated.clear().renderAll();
     $("#inputTextBoxes").html("");
   });
@@ -514,10 +522,10 @@ $(function() {
         showTranslatedText(i, $("#voiceInputBox_" + i).val());
       });
 
-      $("#translatedTextBox_" + i).on("keyup", function() {
+      $("#trslatedTextBox" + i).on("keyup", function() {
         fukidashiArrayTranslated["canvasText_" + i].set(
           "text",
-          $("#translatedTextBox_" + i).val()
+          $("#trslatedTextBox" + i).val()
         );
         canvas_translated.renderAll();
 
@@ -534,8 +542,10 @@ $(function() {
     //初期化処理
     let flagInit = true;
     fukidashiId = 0;
+    fukidashiArrayOriginal = {};
     fukidashiArrayTranslated = {};
     $("#translatedPicBox img").attr("src", fotorama_original.activeFrame.img);
+    canvas_original.clear().renderAll();
     canvas_translated.clear().renderAll();
     $("#inputTextBoxes").html("");
 
@@ -549,13 +559,14 @@ $(function() {
             //最初の読み込み時のみ
             if (index != 0 && flagInit) {
               fukidashiId = index;
+              console.log(fukidashiId);
 
               //テキストボックス＆吹き出しのロード
               $("#inputTextBoxes").append(
                 createFukidashiTextBoxHTML(fukidashiId)
               );
               $("#voiceInputBox_" + fukidashiId).val(value.ja);
-              $("#translatedTextBox_" + fukidashiId).val(value.en);
+              $("#trslatedTextBox" + fukidashiId).val(value.en);
               loadFukidashiOriginal(
                 fukidashiArrayOriginal,
                 value.width,
@@ -572,24 +583,59 @@ $(function() {
               );
 
               // テキストボックスイベント設定
-              $("#voiceInputBox_" + fukidashiId).on("click", function() {
+              // console.log("fukidashiId = " + fukidashiId);
+              // $("#voiceInputBox_" + fukidashiId).on("click", function() {
+              //   console.log(
+              //     "setting voiceInputBox click event: " + fukidashiId
+              //   );
+              //   voiceRecognizeReStart(
+              //     "#voiceInputBox_" + fukidashiId,
+              //     $("#voiceInputBox_" + fukidashiId).val()
+              //   );
+              // });
+
+              // $("#voiceInputBox_" + fukidashiId).on("keyup", function() {
+              //   console.log(
+              //     "setting voiceInputBox keyup event: " + fukidashiId
+              //   );
+              //   showTranslatedText(
+              //     fukidashiId,
+              //     $("#voiceInputBox_" + fukidashiId).val()
+              //   );
+              // });
+
+              // $("#trslatedTextBox" + fukidashiId).on("keyup", function() {
+              //   fukidashiArrayTranslated["canvasText_" + fukidashiId].set(
+              //     "text",
+              //     $("#trslatedTextBox" + fukidashiId).val()
+              //   );
+              //   canvas_translated.renderAll();
+
+              //   //Firebaseに保存
+              //   saveInFirebase();
+              // });
+            }
+          });
+
+          // テキストボックスイベント設定
+          if (flagInit) {
+            console.log("fukidashiId = " + fukidashiId);
+            for (let i = 1; i <= fukidashiId; i++) {
+              $("#voiceInputBox_" + i).on("click", function() {
                 voiceRecognizeReStart(
-                  "#voiceInputBox_" + fukidashiId,
-                  $("#voiceInputBox_" + fukidashiId).val()
+                  "#voiceInputBox_" + i,
+                  $("#voiceInputBox_" + i).val()
                 );
               });
 
-              $("#voiceInputBox_" + fukidashiId).on("keyup", function() {
-                showTranslatedText(
-                  fukidashiId,
-                  $("#voiceInputBox_" + fukidashiId).val()
-                );
+              $("#voiceInputBox_" + i).on("keyup", function() {
+                showTranslatedText(i, $("#voiceInputBox_" + i).val());
               });
 
-              $("#translatedTextBox_" + fukidashiId).on("keyup", function() {
-                fukidashiArrayTranslated["canvasText_" + fukidashiId].set(
+              $("#trslatedTextBox" + i).on("keyup", function() {
+                fukidashiArrayTranslated["canvasText_" + i].set(
                   "text",
-                  $("#translatedTextBox_" + fukidashiId).val()
+                  $("#trslatedTextBox" + i).val()
                 );
                 canvas_translated.renderAll();
 
@@ -597,12 +643,39 @@ $(function() {
                 saveInFirebase();
               });
             }
-          });
+          }
 
           flagInit = false;
         } catch (e) {
           console.log("firebase is not set");
         }
       });
+    console.log("----fukidashiId = " + fukidashiId);
+
+    // テキストボックスイベント設定
+    // console.log("fukidashiId = " + fukidashiId)
+    // for (let i = 1; i <= fukidashiId; i++) {
+    //   $("#voiceInputBox_" + i).on("click", function() {
+    //     voiceRecognizeReStart(
+    //       "#voiceInputBox_" + i,
+    //       $("#voiceInputBox_" + i).val()
+    //     );
+    //   });
+
+    //   $("#voiceInputBox_" + i).on("keyup", function() {
+    //     showTranslatedText(i, $("#voiceInputBox_" + i).val());
+    //   });
+
+    //   $("#trslatedTextBox" + i).on("keyup", function() {
+    //     fukidashiArrayTranslated["canvasText_" + i].set(
+    //       "text",
+    //       $("#trslatedTextBox" + i).val()
+    //     );
+    //     canvas_translated.renderAll();
+
+    //     //Firebaseに保存
+    //     saveInFirebase();
+    //   });
+    // }
   });
 });
