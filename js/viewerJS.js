@@ -1,6 +1,7 @@
 $(function() {
   "use strict";
 
+  let title = getParam("c");
   let lan = "en";
 
   //----------------------------------------------------
@@ -23,7 +24,6 @@ $(function() {
   //----------------------------------------------------
   // 元画像ロード
   //----------------------------------------------------
-  let title;
   // Initialize fotorama manually.
   var $fotoramaDiv_viewer = $(".fotorama_viewer").fotorama();
 
@@ -34,7 +34,8 @@ $(function() {
   let numOfPics = 3;
   for (let i = numOfPics; i > 0; i--) {
     fotorama_viewer.push({
-      img: "img/LoveHina_p" + i + ".png"
+      // img: "img/LoveHina_p" + i + ".png"
+      img: "img/" + title + "_p" + i + ".png"
     });
   }
 
@@ -46,6 +47,16 @@ $(function() {
   //----------------------------------------------------
   // ファンクション
   //----------------------------------------------------
+  function getParam(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+      results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return "";
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+
   function getPageNum() {
     let pageNum = fotorama_viewer.activeFrame.img.slice(-6, -4);
     return pageNum;
@@ -55,7 +66,8 @@ $(function() {
     let pageNum = getPageNum();
     $("#viewerTranslatedPic").attr("src", "");
     database
-      .ref("LoveHina/" + pageNum + "/" + lan + "/views")
+      // .ref("LoveHina/" + pageNum + "/" + lan + "/views")
+      .ref(title + "/" + pageNum + "/" + lan + "/views")
       .on("value", function(data) {
         try {
           $("#viewerTranslatedPic").attr(

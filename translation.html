@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,7 +7,10 @@
     <title>Manga Voice Translation</title>
     <link rel="stylesheet" href="css/reset.css" />
     <link rel="stylesheet" href="css/style.css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.css" rel="stylesheet">
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.css"
+      rel="stylesheet"
+    />
     <!-- <meta name="theme-color" content="#F8F7F8" />
     <link rel="manifest" href="./manifest.json" /> -->
     <!-- <script>
@@ -18,6 +21,7 @@
   </head>
   <body>
     <main>
+      <button type="button" onclick='location.href="index.html"'>戻る</button>
       <div id="languageSettingBox">
         <div id="originalLanguageBox">
           <select id="originalLanguage">
@@ -29,23 +33,28 @@
             <option value="en" selected>英語</option>
             <option value="zh">中国語</option>
           </select>
+        </div>
       </div>
-    </div>
       <div id="panelBox">
         <div id="originalPicBox">
-          <div class="fotorama_original" data-auto="false" data-keyboard="true" data-nav="thumbs" data-arrows="false">
-          </div>
+          <div
+            class="fotorama_original"
+            data-auto="false"
+            data-keyboard="true"
+            data-nav="thumbs"
+            data-arrows="false"
+          ></div>
           <canvas id="canvas_original"></canvas>
         </div>
         <div id="translatedPicBox">
-            <img src=""/>
+          <img src="" />
           <canvas id="canvas_translated"></canvas>
         </div>
       </div>
       <nav id="controllerBox">
-          <button id="clear_btn">クリア</button>
+        <button id="clear_btn">クリア</button>
       </nav>
-      <div id="inputTextBoxes" class="inputTextBoxes">
+      <div id="inputTextBoxes" class="inputTextBoxes"></div>
     </main>
 
     <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>

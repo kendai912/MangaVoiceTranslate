@@ -12,6 +12,17 @@ main {
   margin: 0 auto;
 }
 
+.imgBox {
+  width: 300px;
+  height: auto;
+}
+
+.imgBox img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
 #panelBox {
   display: flex;
   justify-content: space-around;
