@@ -179,11 +179,11 @@ $(function() {
   function createFukidashiTextBoxHTML(fukidashiId) {
     let fukidashiTextBoxHTML =
       '<div class="inputTextBox">' +
-      '<div class="leftBox"><span id="no_' +
+      '<div class="leftBox"><div class="no" id="no_' +
       String(fukidashiId) +
       '">' +
       String(fukidashiId) +
-      "</span>" +
+      "</div>" +
       '<textarea id="voiceInputBox_' +
       String(fukidashiId) +
       '" class="voiceInputBox" cols="60" rows="2"></textarea>' +

@@ -53,6 +53,11 @@ a {
   object-fit: cover;
 }
 
+.fontawesomeIcon {
+  display: flex;
+  justify-content: center;
+}
+
 #languageSettingBox {
   height: 50px;
   display: flex;
@@ -98,6 +103,22 @@ a {
   display: flex;
   justify-content: space-around;
   align-items: center;
+}
+
+.leftBox {
+  display: flex;
+  justify-content: right;
+  align-items: center;
+}
+
+.no {
+  width: 15px;
+  height: 15px;
+  background: blue;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  margin-right: 10px;
 }
 
 #inputTextBoxes {
